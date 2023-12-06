@@ -1,0 +1,21 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: argo-auth
+  namespace: user-pipelines
+spec:
+  refreshInterval: "15s"
+  secretStoreRef:
+    name: gitlab-secretstore
+    kind: SecretStore
+  target:
+    name: argocd-env-secret
+  data:
+  - secretKey: ARGOCD_USERNAME
+    remoteRef:
+      key: gitlab/argo-auth
+      property: username
+  - secretKey: ARGOCD_PASSWORD
+    remoteRef:
+      key: gitlab/argo-auth
+      property: password

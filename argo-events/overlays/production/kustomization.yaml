@@ -1,10 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../../base
 - eventbus.yaml
 - secretstore.yaml
-- external-github-access.yaml
+- external-gitlab-access.yaml
+- external-gitlab-cert.yaml
 - eventsource.yaml
 - ingress-webhook-eventsource.yaml
 - init-pipeline.yaml

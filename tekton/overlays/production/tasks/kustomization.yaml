@@ -6,3 +6,5 @@ resources:
 - kaniko.yaml
 - kubernetes-actions.yaml
 - maven.yaml
+- argocd-task-sync-and-wait.yaml
+namespace: tekton-pipelines

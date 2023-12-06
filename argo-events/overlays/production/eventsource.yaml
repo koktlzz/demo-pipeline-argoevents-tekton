@@ -1,28 +1,59 @@
+# More info on GitLab project hooks: https://docs.gitlab.com/ce/api/projects.html#add-project-hook
 apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:
-  name: webhook
-  namespace: argo-events
+  name: gitlab
 spec:
-  github:
-    user-project:
-      repositories:
-        - owner: lanbingcloud
-          names:
-            - demo-user-project
+  service:
+    ports:
+      - port: 12000
+        targetPort: 12000
+  gitlab:
+    demo-user-project:
+      # Project namespace paths or IDs
+      projects:
+        - "koktlzz/demo-user-project"
+        - "123"
+      # GitLab will send events to following port and endpoint
       webhook:
-        endpoint: /user-project
+        # endpoint to listen to events on
+        endpoint: /push
+        # port to run internal HTTP server on
         port: "12000"
+        # HTTP request method to allow. In this case, only POST requests are accepted
         method: POST
-        url: http://webhook.pipeline1.119-8-58-20.nip.io:30080
+        # url the event-source will use to register at GitLab.
+        # This url must be reachable from outside the cluster.
+        # The name for the service is in `<event-source-name>-eventsource-svc` format.
+        # You will need to create an Ingress or Openshift Route for the event-source service so that it can be reached from GitLab.
+        url: http://webhook.192-168-3-196.nip.io
+      # events to listen to
+      # Visit https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#events
       events:
-        - "push"
-      apiToken:
-        key: token
-        name: github-access
-      wehookSecret:
-        key: secret
-        name: github-access
-      insecure: true
-      active: true
-      contentType: json
+        - PushEvents
+        - TagPushEvents
+      # accessToken refers to K8s secret that stores the gitlab api token
+      accessToken:
+        # Key within the K8s secret whose corresponding value (must be base64 encoded) is access token
+        key: access-token
+        # Name of the K8s secret that contains the access token
+        name: gitlab-access
+      # secret token used by gitlab webhook
+      secretToken:
+        key: secret-token
+        name: gitlab-access
+      # Do SSL verification when triggering the hook
+      enableSSLVerification: false
+      # Gitlab Base url.
+      # Change it to your private GitLab instance url if you have one.
+      gitlabBaseURL: https://your.gitlab.com
+      deleteHookOnFinish: true
+  template:
+    container:
+      volumeMounts:
+        - name: certs-volume
+          mountPath: /etc/ssl/certs
+    volumes:
+      - name: certs-volume
+        secret:
+          secretName: gitlab-cert

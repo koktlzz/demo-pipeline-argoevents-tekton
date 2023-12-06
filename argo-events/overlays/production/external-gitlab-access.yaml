@@ -1,7 +1,7 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: github-access
+  name: gitlab-access
   namespace: argo-events
 spec:
   refreshInterval: "15s"
@@ -9,14 +9,14 @@ spec:
     name: webhook-secretstore
     kind: SecretStore
   target:
-    name: github-access
+    name: gitlab-access
   data:
-  - secretKey: token
+  - secretKey: access-token
     remoteRef:
-      key: github/user-project/argoevents/webhook-access
-      property: token
-  - secretKey: secret
+      key: gitlab/token
+      property: access-token
+  - secretKey: secret-token
     remoteRef:
-      key: github/user-project/argoevents/webhook-access
-      property: secret
+      key: gitlab/token
+      property: secret-token
   

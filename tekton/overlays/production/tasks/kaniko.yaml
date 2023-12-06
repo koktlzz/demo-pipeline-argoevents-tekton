@@ -29,7 +29,7 @@ spec:
       default: []
     - name: BUILDER_IMAGE
       description: The image on which builds will run (default is v1.5.1)
-      default: gcr.io/kaniko-project/executor:v1.5.1@sha256:c6166717f7fe0b7da44908c986137ecfeab21f31ec3992f6e128fff8a94be8a5
+      default: gcriokaniko/executor:v1.10.0
   workspaces:
     - name: source
       description: Holds the context and Dockerfile
@@ -52,6 +52,7 @@ spec:
         - --context=$(workspaces.source.path)/$(params.CONTEXT) # The user does not need to care the workspace and the source.
         - --destination=$(params.IMAGE)
         - --digest-file=$(results.IMAGE_DIGEST.path)
+        - --insecure-registry=your.registry.com
       # kaniko assumes it is running as root, which means this example fails on platforms
       # that default to run containers as random uid (like OpenShift). Adding this securityContext
       # makes it explicit that it needs to run as root.

@@ -7,12 +7,13 @@ spec:
   template:
     serviceAccountName: argo-events-sa
   dependencies:
-    - name: github-dep-push
-      eventSourceName: webhook
-      eventName: user-project
+    - name: gitlab-dep-push
+      eventSourceName: gitlab
+      eventName: demo-user-project
       transform:
         script: |-
-          if event.body.ref == "refs/heads/main" then
+          # pipeline files: https://github.com/lanbingcloud/demo-user-project/tree/main/pipelines
+          if event.body.ref == "refs/heads/master" then
             event.body.pipeline='pipelines/test-pipeline.yaml'
           elseif event.body.ref == "refs/heads/dev" then
             event.body.pipeline='pipelines/dev-pipeline.yaml'
@@ -33,7 +34,7 @@ spec:
               spec:
                 params:
                 - name: REVISION
-                  value: main
+                  value: master
                 - name: PIPELINE
                   value: pipelines/test-pipeline.yaml
                 pipelineSpec:
@@ -55,13 +56,17 @@ spec:
                     - name: output
                       workspace: source-volume
                       subPath: $(params.REVISION)
+                    - name: ssh-directory
+                      workspace: git-credentials
                     params:
                     - name: url
-                      value: https://github.com/lanbingcloud/demo-user-project.git
+                      value: git@your.gitlab.com:koktlzz/demo-user-project.git
                     - name: sparseCheckoutDirectories
                       value: $(params.PIPELINE)
                     - name: revision
                       value: $(params.REVISION)
+                    - name: sslVerify
+                      value: false
                   - name: pipeline-run
                     runAfter:
                     - git-clone
@@ -70,7 +75,7 @@ spec:
                       kind: ClusterTask
                     params:
                       - name: image
-                        value: gcr.io/cloud-builders/kubectl@sha256:c373e04fcc64c448e6cf9ebdde6fe67bb8c10b0df682da9210e1e965606b3af6
+                        value: gcriocloudbuilders/kubectl:latest
                       - name: script
                         value: |
                           COMMIT=$(tasks.git-clone.results.commit)
@@ -102,16 +107,23 @@ spec:
                       subPath: $(params.REVISION)
                   workspaces:
                   - name: source-volume
+                  - name: git-credentials
+                podTemplate:
+                  securityContext:
+                    fsGroup: 65532
                 workspaces:
                 - name: source-volume
                   persistentVolumeClaim:
                     claimName: source-pvc
+                - name: git-credentials
+                  secret:
+                    secretName: gitlab-ssh-credentials
           parameters:
             - src:
-                dependencyName: github-dep-push
+                dependencyName: gitlab-dep-push
                 dataKey: body.ref
               dest: spec.params.0.value
             - src:
-                dependencyName: github-dep-push
+                dependencyName: gitlab-dep-push
                 dataKey: body.pipeline
               dest: spec.params.1.value
